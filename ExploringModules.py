@@ -1,5 +1,5 @@
-from ase.collections import g2
-print(g2.names)
+"""from ase.collections import g2
+print(g2.names)"""
 
 
 """['PH3', 'P2', 'CH3CHO', 'H2COH', 'CS', 'OCHCHO', 
@@ -31,3 +31,6 @@ print(g2.names)
     'Li', 'N2', 'Cl2', 
     'H2O2', 'Na2', 'BeH', 'C3H4_C2v', 'NO2']
     """
+    
+import fairchem.core.models as md
+print(dir(md))

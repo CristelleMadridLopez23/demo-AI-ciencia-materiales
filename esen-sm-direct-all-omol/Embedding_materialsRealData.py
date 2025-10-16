@@ -2,7 +2,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df = pd.read_csv("/Users/cristellemadrid/Desktop/demo-AI-ciencia-materiales/propiedades_dataset_atomicdata.csv")
+df = pd.read_csv("/Users/cristellemadrid/Desktop/demo-AI-ciencia-materiales/esen-sm-direct-all-omol/propiedades_dataset_atomicdata.csv")
 
 X = df[["energia_eV", "fuerza_promedio", "num_atomos"]].values
 
