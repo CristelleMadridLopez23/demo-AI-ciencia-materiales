@@ -9,6 +9,7 @@ from ase.build import molecule
 from ase.visualize import view
 
 
+
 # === 1️⃣ Cargar modelo preentrenado ===
 mlip = get_predict_unit("esen-sm-direct-all-omol")
 
@@ -16,14 +17,23 @@ mlip = get_predict_unit("esen-sm-direct-all-omol")
 calc = FAIRChemCalculator(mlip)
 
 # === 3️⃣ Definir la molécula (Etanol) ===
-atoms = molecule("H2O")
+atoms = molecule("SiH4")  # silano, precursor semiconductor
 atoms.calc = calc
 
-# === 4️⃣ Obtener energía y fuerzas ===
-energy = atoms.get_potential_energy()
-forces = atoms.get_forces()
+atoms= {
+    
+}
 
-print(f"Energía total: {energy:.4f} eV")
+# === 4️⃣ Informacion sobre la molecula  ===
+# Datos básicos
+print("Fórmula:", atoms.get_chemical_formula())
+print("Número de átomos:", atoms.get_number_of_atoms())
+
+# Propiedades globales (requiere calculador)
+print("Energía total:", atoms.get_potential_energy(), "eV")
+print("Centro de masa:", atoms.get_center_of_mass())
+
+forces = atoms.get_forces()
 print("Fuerzas (primeros 3 átomos):")
 print(forces[:3])
 
