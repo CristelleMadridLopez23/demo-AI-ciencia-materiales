@@ -8,6 +8,7 @@ from ase import Atoms
 from fairchem.core.calculate.pretrained_mlip import get_predict_unit
 from fairchem.core.calculate.ase_calculator import FAIRChemCalculator
 from fairchem.core.datasets import AseDBDataset
+from ase.visualize import view
 
 # === 1️⃣ Cargar modelo preentrenado ===
 mlip = get_predict_unit("esen-sm-direct-all-omol")
@@ -21,7 +22,7 @@ print(f"✅ Dataset cargado con {len(dataset)} estructuras")
 # === 3️⃣ Procesar muestras del dataset ===
 data = []
 
-for i in tqdm(range(0, 20)):  # muestreo cada 50k
+for i in tqdm(range(0, 3)):  # muestreo cada 50k
     try:
         atomic_data = dataset[i]  # <- objeto AtomicData
         # Convertir a ASE
@@ -41,6 +42,8 @@ for i in tqdm(range(0, 20)):  # muestreo cada 50k
         energy = atoms.get_potential_energy()
         center = atoms.get_center_of_mass()
         forces = atoms.get_forces()
+        
+        view(atoms)  # Opcional: visualizar la estructura
 
         data.append({
             "id": i,
@@ -63,5 +66,6 @@ df = pd.DataFrame(data)
 print("\n=== Vista previa de resultados ===")
 print(df.head())
 
-df.to_csv("propiedades_dataset_atomicdata.csv", index=False)
+#df.to_csv("propiedades_dataset_atomicdata.csv", index=False)
 print("💾 Archivo guardado: propiedades_dataset_atomicdata.csv")
+
