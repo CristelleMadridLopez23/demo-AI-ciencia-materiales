@@ -2,45 +2,184 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa de Embeddings - Materiales Ferromagnéticos</title>
+  <title>Explorador OMOL – Materiales Ferromagnéticos</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-50 text-gray-900">
-  <div class="max-w-6xl mx-auto p-8">
-    <h1 class="text-3xl font-bold mb-6 text-center">SMILES and IA for material property prediction</h1>
-    <div id="scatterPlot" class="rounded-lg shadow bg-white p-4" style="height:600px;"></div>
+  <div class="max-w-7xl mx-auto p-8">
+    
+    <!-- 🔹 TÍTULO PRINCIPAL -->
+    <h1 class="text-3xl font-bold mb-2 text-center text-gray-900">
+      SMILES & IA for Material Property Prediction
+    </h1>
+    <p class="text-center text-gray-500 mb-6">
+      Explorador interactivo de embeddings generados con el modelo OMOL (FairChem)
+    </p>
+
+    <!-- 🔹 SECCIÓN PRINCIPAL (Mapa y Panel) -->
+    <div class="grid grid-cols-3 gap-6">
+      
+      <!-- 🧭 Scatter Plot -->
+      <div class="col-span-2 bg-white rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold mb-2">Scatter Map of Embeddings</h2>
+        <div id="scatterPlot" style="height:500px;"></div>
+      </div>
+
+      <!-- 🧪 Panel de detalles -->
+      <div class="col-span-1 bg-white rounded-lg shadow p-4 flex flex-col justify-between">
+        <div>
+          <h2 class="text-lg font-semibold mb-2">Molecule Details</h2>
+          <div id="moleculeInfo" class="text-sm text-gray-700 space-y-2">
+            <p>Haz clic en un punto para ver información.</p>
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <button id="findSimilarBtn" 
+                  class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Find Similar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔹 SECCIÓN INFERIOR: INSIGHTS -->
+    <div class="grid grid-cols-2 gap-6 mt-8">
+      
+      <!-- 📊 Histograma -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold mb-2">Top-N Stability Table / Bar Chart</h2>
+        <div id="histogramPlot" style="height:300px;"></div>
+      </div>
+
+      <!-- 📈 Correlación -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold mb-2">Correlation: #Atoms vs Energy</h2>
+        <div id="correlationPlot" style="height:300px;"></div>
+      </div>
+    </div>
+
+    <!-- 🔹 FOOTER -->
+    <footer class="mt-8 text-center text-sm text-gray-500">
+      Tesis – Representación de Materiales Ferromagnéticos mediante Modelos de Aprendizaje Profundo (OMOL – FairChem)
+    </footer>
   </div>
 
- 
- 
- 
- 
+  <!-- =================== SCRIPT =================== -->
   <script>
-    const data = {{ data|safe }};
-    const trace = {
-      x: data.map(d => d.emb_x),
-      y: data.map(d => d.emb_y),
-      text: data.map(d => d.nombre || 'sin nombre'),
-      hovertext: data.map(d =>
-        `SMILES: ${d.smiles}<br>
-         Energía: ${d.energia_eV?.toFixed(3)} eV<br>
-         Fuerza: ${d.fuerza_promedio?.toFixed(3)}<br>
-         Átomos: ${d.num_atomos}`
-      ),
-      mode: 'markers',
-      type: 'scatter',
-      marker: { size: 8, color: 'royalblue', opacity: 0.8 }
-    };
+  const data = {{ data|safe }};
 
-    Plotly.newPlot('scatterPlot', [trace], {
-      hovermode: 'closest',
-      xaxis: { title: 'Embedding X' },
-      yaxis: { title: 'Embedding Y' },
-      margin: { t: 40 },
-      paper_bgcolor: '#f9fafb',
-      plot_bgcolor: '#f9fafb'
-    });
-  </script>
-</body>
-</html>
+  // === Gráfico de dispersión principal ===
+  const scatterTrace = {
+    x: data.map(d => d.emb_x),
+    y: data.map(d => d.emb_y),
+    text: data.map(d => d.smiles),
+    hovertemplate: `
+      <b>%{text}</b><br>
+      Energy: %{customdata[0]:.3f} eV<br>
+      Force: %{customdata[1]:.3f}<br>
+      Atoms: %{customdata[2]}<extra></extra>
+    `,
+    customdata: data.map(d => [d.energia_eV, d.fuerza_promedio, d.num_atomos]),
+    mode: 'markers',
+    marker: {
+      size: data.map(d => d.num_atomos * 1.5 + 5),
+      color: data.map(d => d.energia_eV),
+      colorscale: 'Blues',
+      showscale: true
+    },
+    type: 'scatter'
+  };
+
+  const scatterLayout = {
+    paper_bgcolor: '#f9fafb',
+    plot_bgcolor: '#ffffff',
+    margin: { t: 40 },
+  };
+  Plotly.newPlot('scatterPlot', [scatterTrace], scatterLayout);
+
+  // === Evento de clic en puntos ===
+  document.getElementById('scatterPlot').on('plotly_click', function(eventData) {
+    const i = eventData.points[0].pointIndex;
+    const mol = data[i];
+    showMoleculeDetails(mol);
+  });
+
+  // === Mostrar detalles de molécula ===
+  function showMoleculeDetails(mol) {
+    const div = document.getElementById('moleculeInfo');
+    div.innerHTML = `
+      <div class="flex flex-col gap-2">
+        <p><strong>SMILES:</strong> ${mol.smiles}</p>
+        <p><strong>Formula:</strong> ${mol.formula || '—'}</p>
+        <p><strong>Energy:</strong> ${mol.energia_eV.toFixed(3)} eV</p>
+        <p><strong>Force:</strong> ${mol.fuerza_promedio.toFixed(3)}</p>
+        <p><strong>Atoms:</strong> ${mol.num_atomos}</p>
+        <p><strong>Center of Mass:</strong> (${mol.centro_masa_x.toFixed(2)}, ${mol.centro_masa_y.toFixed(2)}, ${mol.centro_masa_z.toFixed(2)})</p>
+      </div>
+    `;
+  }
+
+  // === 📊 NUEVO: Top 10 de moléculas más estables ===
+  const sorted = data
+    .filter(d => d.energia_eV !== null && !isNaN(d.energia_eV))
+    .sort((a, b) => a.energia_eV - b.energia_eV)
+    .slice(0, 10);
+
+  const topTrace = {
+    x: sorted.map(d => d.energia_eV),
+    y: sorted.map(d => d.smiles),
+    text: sorted.map(d => `Atoms: ${d.num_atomos}<br>Force: ${d.fuerza_promedio.toFixed(3)}`),
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+      color: 'royalblue',
+      opacity: 0.8
+    },
+    hovertemplate: `
+      <b>%{y}</b><br>
+      Energy: %{x:.3f} eV<br>
+      %{text}<extra></extra>
+    `
+  };
+
+  const topLayout = {
+    xaxis: { title: 'Energy (eV)', autorange: 'reversed' },
+    yaxis: { title: 'Molecule (SMILES)', automargin: true },
+    paper_bgcolor: '#ffffff',
+    plot_bgcolor: '#ffffff',
+    margin: { l: 160, r: 40, t: 30, b: 40 },
+  };
+
+  Plotly.newPlot('histogramPlot', [topTrace], topLayout);
+
+  // === 📈 Correlación #átomos vs energía con etiquetas ===
+  const corrTrace = {
+    x: data.map(d => d.num_atomos),
+    y: data.map(d => d.energia_eV),
+    text: data.map(d => d.nombre || d.smiles),
+    mode: 'markers+text',
+    type: 'scatter',
+    textposition: 'top center',
+    marker: {
+      color: 'royalblue',
+      size: 10,
+      line: { color: 'darkblue', width: 1 }
+    },
+    hovertemplate: `
+      <b>%{text}</b><br>
+      Atoms: %{x}<br>
+      Energy: %{y:.3f} eV<extra></extra>
+    `
+  };
+
+  const corrLayout = {
+    xaxis: { title: 'Number of Atoms' },
+    yaxis: { title: 'Energy (eV)' },
+    paper_bgcolor: '#ffffff',
+    plot_bgcolor: '#ffffff'
+  };
+  Plotly.newPlot('correlationPlot', [corrTrace], corrLayout);
+</script>
+
