@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa de Embeddings - Materiales Ferromagnéticos</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-6xl mx-auto p-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">SMILES and IA for material property prediction</h1>
+    <div id="scatterPlot" class="rounded-lg shadow bg-white p-4" style="height:600px;"></div>
+  </div>
+
+ 
+ 
+ 
+ 
+  <script>
+    const data = {{ data|safe }};
+    const trace = {
+      x: data.map(d => d.emb_x),
+      y: data.map(d => d.emb_y),
+      text: data.map(d => d.nombre || 'sin nombre'),
+      hovertext: data.map(d =>
+        `SMILES: ${d.smiles}<br>
+         Energía: ${d.energia_eV?.toFixed(3)} eV<br>
+         Fuerza: ${d.fuerza_promedio?.toFixed(3)}<br>
+         Átomos: ${d.num_atomos}`
+      ),
+      mode: 'markers',
+      type: 'scatter',
+      marker: { size: 8, color: 'royalblue', opacity: 0.8 }
+    };
+
+    Plotly.newPlot('scatterPlot', [trace], {
+      hovermode: 'closest',
+      xaxis: { title: 'Embedding X' },
+      yaxis: { title: 'Embedding Y' },
+      margin: { t: 40 },
+      paper_bgcolor: '#f9fafb',
+      plot_bgcolor: '#f9fafb'
+    });
+  </script>
+</body>
+</html>
